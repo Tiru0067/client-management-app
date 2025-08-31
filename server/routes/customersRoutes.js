@@ -1,8 +1,13 @@
 const express = require("express");
 const costumersController = require("../controllers/customersController");
 
-const { getAllCustomers, postCustomer, getCustomerById, deleteCustomerById } =
-  costumersController;
+const {
+  getAllCustomers,
+  postCustomer,
+  getCustomerById,
+  updateCustomerById,
+  deleteCustomerById,
+} = costumersController;
 
 // Router instance
 const router = express.Router();
@@ -16,6 +21,7 @@ router
 router
   .route("/:id")
   .get(getCustomerById) // Get customer by ID
+  .put(updateCustomerById) // Update customer by ID
   .delete(deleteCustomerById); // Delete customer by ID
 
 module.exports = router;

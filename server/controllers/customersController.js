@@ -65,6 +65,38 @@ exports.getCustomerById = async (req, res, next) => {
   }
 };
 
+// Update customer by ID
+exports.updateCustomerById = async (req, res, next) => {
+  try {
+    const id = Number(req.params.id);
+    const updatedFields = req.body || {};
+
+    // Validate input data - ensure at least one field to update
+    if (!updatedFields || Object.keys(updatedFields).length === 0) {
+      return sendResponse(res, 400, "Missing required fields");
+    }
+
+    const updatedCustomer = await customersService.updateCustomerById(
+      id,
+      updatedFields
+    );
+
+    // Check if the update was successful or if the customer was not found
+    if (!updatedCustomer || Object.keys(updatedCustomer).length === 0) {
+      return sendResponse(res, 404, "Customer not found");
+    }
+
+    return sendResponse(
+      res,
+      200,
+      "Customer updated successfully",
+      updatedCustomer
+    );
+  } catch (err) {
+    next(err);
+  }
+};
+
 // Delete customer by ID
 exports.deleteCustomerById = async (req, res, next) => {
   try {

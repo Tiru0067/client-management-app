@@ -44,6 +44,7 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
   }
 };
 
+// Add a new customer service
 exports.addCustomer = async (first_name, last_name, phone_number) => {
   try {
     const sql = `
@@ -65,6 +66,7 @@ exports.addCustomer = async (first_name, last_name, phone_number) => {
   }
 };
 
+//  Get customer by ID service
 exports.getCustomerById = async (id) => {
   try {
     const sql = `SELECT * FROM customers WHERE id = ?`;
@@ -75,6 +77,45 @@ exports.getCustomerById = async (id) => {
   }
 };
 
+// Update customer by ID service
+exports.updateCustomerById = async (id, updateFields) => {
+  try {
+    const existingCustomer = await dbGet(
+      `SELECT * FROM customers WHERE id = ?`,
+      [id]
+    );
+    if (!existingCustomer) return null; // Customer not found
+
+    // Filter out id
+    const newUpdateFields = { ...existingCustomer, ...updateFields };
+    const keysToUpdate = Object.keys(newUpdateFields).filter(
+      (key) => key !== "id"
+    );
+    const setClause = keysToUpdate.map((key) => `${key} = ?`).join(", ");
+    const params = keysToUpdate.map((key) => newUpdateFields[key]);
+    params.push(id);
+
+    const sql = `
+      UPDATE customers
+      SET ${setClause}
+      WHERE id = ?
+    `;
+
+    // Execute the update query and get the number of affected rows
+    const changes = await changesCount(sql, params);
+
+    if (changes === 0) return null; // No rows updated, possibly invalid ID
+
+    // Fetch and return the updated customer
+    const updatedCustomerSql = `SELECT * FROM customers WHERE id = ?`;
+    const updatedCustomer = await dbGet(updatedCustomerSql, [id]);
+    return updatedCustomer;
+  } catch (err) {
+    throw err;
+  }
+};
+
+// Delete customer by ID service
 exports.deleteCustomerById = async (id) => {
   try {
     const sql = `DELETE FROM customers WHERE id = ?`;
