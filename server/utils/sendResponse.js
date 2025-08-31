@@ -1,7 +1,14 @@
-const sendResponse = (res, statusCode, message, data = null) => {
+const sendResponse = (
+  res,
+  statusCode,
+  message,
+  data = null,
+  extraFields = {}
+) => {
   const response = {
     status: statusCode,
     message: typeof message === "string" ? message : JSON.stringify(message),
+    ...extraFields,
   };
 
   // Only include data if it's provided
