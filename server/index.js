@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const errorHandler = require("./middleware/errorHandler");
 const customersRoutes = require("./routes/customersRoutes");
 
 // Create an Express application
@@ -11,6 +12,8 @@ app.use(cors());
 
 // Routes
 app.use("/api/customers", customersRoutes);
+
+app.use(errorHandler);
 
 // Set the port number from environment variable or default to 3000
 const PORT = process.env.PORT || 3000;

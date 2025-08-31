@@ -1,5 +1,8 @@
 const express = require("express");
 const db = require("../utils/db");
+const costumersController = require("../controlers/customersController");
+
+const { getAllCustomers } = costumersController;
 
 // Router instance
 const router = express.Router();
@@ -7,14 +10,6 @@ const router = express.Router();
 router
   .route("/")
   // Get all customers
-  .get((req, res) => {
-    const sql = "SELECT * FROM customers";
-    db.all(sql, [], (err, rows) => {
-      if (err) {
-        return res.status(500).json({ error: err.message });
-      }
-      res.json({ customers: rows });
-    });
-  });
+  .get(getAllCustomers);
 
 module.exports = router;
