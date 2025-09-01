@@ -17,25 +17,82 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
     const filters = buildSearchFilter(search);
     const sorting = validateSort(sortBy, sortOrder);
 
-    const countsql = `SELECT COUNT(*) as count FROM customers ${filters.whereClause}`;
-    const sql = `
-        SELECT *
-        FROM customers
-        ${filters.whereClause}
-        ORDER BY ${sorting.sortBy} ${sorting.sortOrder}
-        LIMIT ? OFFSET ?
-    `;
-
-    // First, get the total count of items for pagination
+    // 1. Get total distinct customer count
+    const countsql = `SELECT COUNT(DISTINCT customers.id) as count FROM customers ${filters.whereClause}`;
     const countResults = await dbGet(countsql, filters.params);
     const totalItems = countResults.count;
-    const pagination = getPagination(totalItems, page, limit);
-    const params = [...filters.params, pagination.limit, pagination.offset];
 
-    const rows = await dbAll(sql, params);
+    // 2. Get pagination customer ids
+    const idSql = `
+      SELECT customers.id FROM customers
+      ${filters.whereClause}
+      ORDER BY customers.${sorting.sortBy} ${sorting.sortOrder}
+      LIMIT ? OFFSET ?
+    `;
+
+    const pagination = getPagination(totalItems, page, limit);
+    const idParams = [...filters.params, pagination.limit, pagination.offset];
+
+    // Get customer IDs for the current page
+    const idRows = await dbAll(idSql, idParams);
+    const customerIds = idRows.map((row) => row.id);
+
+    if (customerIds.length === 0) {
+      return {
+        customers: [],
+        currentPage: pagination.currentPage,
+        totalPages: pagination.totalPages,
+        totalItems,
+        pageLimit: pagination.limit,
+      };
+    }
+
+    // 3. Get customer details with addresses
+    const sql = `
+        SELECT 
+          customers.id,
+          customers.first_name,
+          customers.last_name,
+          customers.phone_number,
+          addresses.address_details,
+          addresses.city,
+          addresses.state,
+          addresses.pin_code
+        FROM customers
+        LEFT JOIN addresses ON customers.id = addresses.customer_id
+        WHERE customers.id IN (${customerIds.map(() => "?").join(",")})
+        ORDER BY customers.${sorting.sortBy} ${sorting.sortOrder}
+    `;
+
+    const rows = await dbAll(sql, customerIds);
+
+    // Group addresses by customer
+    const customersMap = new Map();
+    rows.forEach((row) => {
+      if (!customersMap.has(row.id)) {
+        customersMap.set(row.id, {
+          id: row.id,
+          first_name: row.first_name,
+          last_name: row.last_name,
+          phone_number: row.phone_number,
+          addresses: [],
+        });
+      }
+      if (row.address_details) {
+        customersMap.get(row.id).addresses.push({
+          address_details: row.address_details,
+          city: row.city,
+          state: row.state,
+          pin_code: row.pin_code,
+        });
+      }
+    });
+
+    // Convert map values to an array
+    const customers = Array.from(customersMap.values());
 
     return {
-      rows,
+      customers,
       currentPage: pagination.currentPage,
       totalPages: pagination.totalPages,
       totalItems,
@@ -71,8 +128,42 @@ exports.addCustomer = async (first_name, last_name, phone_number) => {
 //  Get customer by ID service
 exports.getCustomerById = async (id) => {
   try {
-    const sql = `SELECT * FROM customers WHERE id = ?`;
-    const customer = await dbGet(sql, [id]);
+    const sql = `
+      SELECT 
+        customers.id,
+        customers.first_name,
+        customers.last_name,
+        customers.phone_number,
+        addresses.address_details,
+        addresses.city,
+        addresses.state,
+        addresses.pin_code
+      FROM customers
+      LEFT JOIN addresses ON customers.id = addresses.customer_id
+      WHERE customers.id = ?
+    `;
+    const rows = await dbAll(sql, [id]);
+    if (rows.length === 0) return null; // Customer not found
+
+    const customer = {
+      id: rows[0].id,
+      first_name: rows[0].first_name,
+      last_name: rows[0].last_name,
+      phone_number: rows[0].phone_number,
+      addresses: [],
+    };
+
+    rows.forEach((row) => {
+      if (row.address_details) {
+        customer.addresses.push({
+          address_details: row.address_details,
+          city: row.city,
+          state: row.state,
+          pin_code: row.pin_code,
+        });
+      }
+    });
+
     return customer;
   } catch (err) {
     throw err;

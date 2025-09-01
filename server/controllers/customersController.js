@@ -7,7 +7,7 @@ exports.getAllCustomers = async (req, res, next) => {
     // Extract query parameters
     let { search, sort_by, sort_order, page, limit } = req.query;
 
-    const { rows, currentPage, totalPages, totalItems, pageLimit } =
+    const { customers, currentPage, totalPages, totalItems, pageLimit } =
       await customersService.getCustomers(
         search,
         sort_by,
@@ -16,12 +16,12 @@ exports.getAllCustomers = async (req, res, next) => {
         limit
       );
 
-    if (!rows) return sendResponse(res, 404, "No customers found");
+    if (!customers) return sendResponse(res, 404, "No customers found");
 
     return sendResponse(res, 200, "success", {
-      customers: rows,
+      customers,
       page: currentPage,
-      results: rows.length,
+      results: customers.length,
       limit: pageLimit,
       totalItems,
       totalPages,
