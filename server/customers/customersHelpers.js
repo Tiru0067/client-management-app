@@ -20,9 +20,19 @@ exports.validateSort = (sortBy, sortOrder) => {
 // Build search filter for SQL queries
 exports.buildSearchFilter = (search) => {
   if (!search) return { whereClause: "", params: [] };
-  whereClause = `WHERE LOWER(first_name) LIKE LOWER(?) OR LOWER(last_name) LIKE LOWER(?) OR phone_number LIKE ?`;
-  const searchParam = `%${search}%`;
-  const params = [searchParam, searchParam, searchParam];
+  const allowedSearchFields = [
+    "first_name",
+    "last_name",
+    "phone_number",
+    "city",
+    "state",
+    "pin_code",
+  ];
+  const placeholders = allowedSearchFields
+    .map((key) => `LOWER(${key}) LIKE LOWER(?)`)
+    .join(" OR ");
+  whereClause = `WHERE ${placeholders}`;
+  const params = allowedSearchFields.map(() => `%${search}%`);
   return { whereClause, params };
 };
 

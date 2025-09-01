@@ -17,13 +17,18 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
     const sorting = validateSort(sortBy, sortOrder);
 
     // 1. Get total distinct customer count
-    const countsql = `SELECT COUNT(DISTINCT customers.id) as count FROM customers ${filters.whereClause}`;
+    const countsql = `
+      SELECT COUNT(DISTINCT customers.id) as count FROM customers
+      LEFT JOIN addresses ON customers.id = addresses.customer_id
+      ${filters.whereClause}
+    `;
     const countResults = await dbGet(countsql, filters.params);
     const totalItems = countResults.count;
 
     // 2. Get pagination customer ids
     const idSql = `
-      SELECT customers.id FROM customers
+      SELECT DISTINCT customers.id FROM customers
+      LEFT JOIN addresses ON customers.id = addresses.customer_id
       ${filters.whereClause}
       ORDER BY customers.${sorting.sortBy} ${sorting.sortOrder}
       LIMIT ? OFFSET ?
