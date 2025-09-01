@@ -11,16 +11,38 @@ const dbGet = util.promisify(db.get).bind(db);
 const dbAll = util.promisify(db.all).bind(db);
 
 // Fetch customers with optional search, sorting, and pagination
-exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
+exports.getCustomers = async (
+  search,
+  sortBy,
+  sortOrder,
+  page,
+  limit,
+  only_one_address
+) => {
   try {
     const filters = buildSearchFilter(search);
     const sorting = validateSort(sortBy, sortOrder);
+
+    let whereClause = filters.whereClause;
+    const trueValues = [true, "true", 1, "1"];
+    const falseValues = [false, "false", 0, "0"];
+
+    const value = trueValues.includes(only_one_address)
+      ? 1
+      : falseValues.includes(only_one_address)
+      ? 0
+      : null;
+
+    if (value !== null)
+      whereClause +=
+        (whereClause ? " AND " : "WHERE ") +
+        `customers.only_one_address = ${value}`;
 
     // 1. Get total distinct customer count
     const countsql = `
       SELECT COUNT(DISTINCT customers.id) as count FROM customers
       LEFT JOIN addresses ON customers.id = addresses.customer_id
-      ${filters.whereClause}
+      ${whereClause}
     `;
     const countResults = await dbGet(countsql, filters.params);
     const totalItems = countResults.count;
@@ -29,7 +51,7 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
     const idSql = `
       SELECT DISTINCT customers.id FROM customers
       LEFT JOIN addresses ON customers.id = addresses.customer_id
-      ${filters.whereClause}
+      ${whereClause}
       ORDER BY customers.${sorting.sortBy} ${sorting.sortOrder}
       LIMIT ? OFFSET ?
     `;
@@ -58,6 +80,7 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
           customers.first_name,
           customers.last_name,
           customers.phone_number,
+          customers.only_one_address,
           addresses.address_details,
           addresses.city,
           addresses.state,
@@ -79,6 +102,7 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
           first_name: row.first_name,
           last_name: row.last_name,
           phone_number: row.phone_number,
+          only_one_address: row.only_one_address,
           addresses: [],
         });
       }
@@ -138,6 +162,7 @@ exports.getCustomerById = async (id) => {
         customers.first_name,
         customers.last_name,
         customers.phone_number,
+        customers.only_one_address,
         addresses.address_details,
         addresses.city,
         addresses.state,
@@ -154,6 +179,7 @@ exports.getCustomerById = async (id) => {
       first_name: rows[0].first_name,
       last_name: rows[0].last_name,
       phone_number: rows[0].phone_number,
+      only_one_address: rows[0].only_one_address,
       addresses: [],
     };
 

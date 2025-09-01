@@ -24,6 +24,7 @@ db.serialize(() => {
         first_name TEXT NOT NULL,
         last_name TEXT NOT NULL,
         phone_number TEXT NOT NULL UNIQUE
+        only_one_address BOOLEAN DEFAULT 0
     )`,
     (err) => {
       if (err) {
@@ -40,6 +41,7 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         customer_id INTEGER,
         address_details TEXT NOT NULL,
+        city TEXT NOT NULL,
         state TEXT NOT NULL,
         pin_code TEXT NOT NULL,
         FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE

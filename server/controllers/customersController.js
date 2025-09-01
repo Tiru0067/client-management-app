@@ -5,7 +5,8 @@ const customersService = require("../customers/customersService");
 exports.getAllCustomers = async (req, res, next) => {
   try {
     // Extract query parameters
-    let { search, sort_by, sort_order, page, limit } = req.query;
+    let { search, sort_by, sort_order, page, limit, only_one_address } =
+      req.query;
 
     const { customers, currentPage, totalPages, totalItems, pageLimit } =
       await customersService.getCustomers(
@@ -13,7 +14,8 @@ exports.getAllCustomers = async (req, res, next) => {
         sort_by,
         sort_order,
         page,
-        limit
+        limit,
+        only_one_address
       );
 
     if (!customers) return sendResponse(res, 404, "No customers found");

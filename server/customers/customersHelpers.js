@@ -1,4 +1,8 @@
 const db = require("../utils/db");
+const util = require("util");
+
+const dbGet = util.promisify(db.get).bind(db);
+const dbRun = util.promisify(db.run).bind(db);
 
 // helpers for building SQL queries with search, pagination, and sorting
 // ##################################################################################
@@ -59,4 +63,28 @@ exports.getPagination = (totalItems, currentPage = 1, limit = 10) => {
     limit,
     offset,
   };
+};
+
+// Update only one Address Flag
+exports.updateOnlyOneAddressFlag = async (customerId, addressId) => {
+  if (!customerId && addressId) {
+    const address = await dbGet("SELECT * FROM addresses WHERE id = ?", [
+      addressId,
+    ]);
+    customerId = address["customer_id"];
+  }
+
+  if (!customerId) {
+    throw new Error("customerId is required to update only_one_address flag.");
+  }
+
+  const result = await dbGet(
+    "SELECT COUNT(*) AS address_count FROM addresses WHERE customer_id  = ?",
+    [customerId]
+  );
+  const onlyOne = result.address_count === 1;
+  await dbRun("UPDATE customers SET only_one_address = ? WHERE id = ?", [
+    onlyOne,
+    customerId,
+  ]);
 };

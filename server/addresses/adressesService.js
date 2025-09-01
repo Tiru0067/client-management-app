@@ -1,6 +1,9 @@
 const util = require("util");
 const db = require("../utils/db");
 const { lastAffectedId, changesCount } = require("../utils/helpers");
+const {
+  updateOnlyOneAddressFlag,
+} = require("../customers/customersHelpers.js");
 
 const dbAll = util.promisify(db.all).bind(db);
 const dbGet = util.promisify(db.get).bind(db);
@@ -26,6 +29,7 @@ exports.addnewAddressByCustomerId = async ({ customerId, address }) => {
     VALUES (${Placeholders})
   `;
   const result = await lastAffectedId(query, values);
+  await updateOnlyOneAddressFlag(customerId, null);
   return { id: result, ...address };
 };
 
@@ -48,6 +52,7 @@ exports.updateAddressById = async (addressId, addressUpdates) => {
 
   const updatedAddressSql = "SELECT * FROM addresses WHERE id = ?";
   const updatedAddress = await dbGet(updatedAddressSql, addressId);
+  await updateOnlyOneAddressFlag(existingAddress["customer_id"], null);
   return updatedAddress;
 };
 
@@ -55,5 +60,6 @@ exports.updateAddressById = async (addressId, addressUpdates) => {
 exports.deleteAddressById = async (addressId) => {
   const query = "DELETE FROM addresses WHERE id = ?";
   const result = await changesCount(query, [addressId]);
+  await updateOnlyOneAddressFlag(null, addressId);
   return result > 0;
 };
