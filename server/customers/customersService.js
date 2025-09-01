@@ -9,7 +9,6 @@ const { lastAffectedId, changesCount } = require("../utils/helpers");
 
 const dbGet = util.promisify(db.get).bind(db);
 const dbAll = util.promisify(db.all).bind(db);
-const dbRun = util.promisify(db.run).bind(db);
 
 // Fetch customers with optional search, sorting, and pagination
 exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
