@@ -12,7 +12,8 @@ const {
   deleteCustomerById,
 } = costumersController;
 
-const { getAddressesByCustomerId } = addressesController;
+const { getAddressesByCustomerId, addAddressByCustomerId } =
+  addressesController;
 
 // Router instance
 const router = express.Router();
@@ -25,7 +26,7 @@ router
 
 router
   .route("/:id")
-  .all(parseIdParam) // Middleware to parse and validate ID parameter
+  .all(parseIdParam("id")) // Middleware to parse and validate ID parameter
   .all(checkCustomerExists) // Middleware to check if customer exists
   .get(getCustomerById) // Get customer by ID
   .put(updateCustomerById) // Update customer by ID
@@ -33,9 +34,9 @@ router
 
 router
   .route("/:id/addresses")
-  .all(parseIdParam) // Middleware to parse and validate ID parameter
+  .all(parseIdParam("id")) // Middleware to parse and validate ID parameter
   .all(checkCustomerExists) // Middleware to check if customer exists
-  .get(getAddressesByCustomerId); // Get addresses for a specific customer
-//.put(); // Update addresses for a specific customer
+  .get(getAddressesByCustomerId) // Get addresses for a specific customer
+  .post(addAddressByCustomerId); // Update addresses for a specific customer
 
 module.exports = router;

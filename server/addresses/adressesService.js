@@ -3,6 +3,7 @@ const db = require("../utils/db");
 const { lastAffectedId, changesCount } = require("../utils/helpers");
 
 const dbAll = util.promisify(db.all).bind(db);
+const dbGet = util.promisify(db.get).bind(db);
 
 // Get addresses for a specific customer
 exports.getAddressesByCustomerId = async (customerId) => {
@@ -26,4 +27,33 @@ exports.addnewAddressByCustomerId = async ({ customerId, address }) => {
   `;
   const result = await lastAffectedId(query, values);
   return { id: result, ...address };
+};
+
+// Update addresses for a specific customer
+exports.updateAddressById = async (addressId, addressUpdates) => {
+  const keys = Object.keys(addressUpdates);
+  if (keys.length === 0) return null; // No updates provided
+
+  const existingAddressQuery = "SELECT * FROM addresses WHERE id = ?";
+  const existingAddress = await dbGet(existingAddressQuery, [addressId]);
+  const newAddress = { ...existingAddress, ...addressUpdates }; // Merge existing address with updates
+  const columns = Object.keys(newAddress).filter((key) => key !== "id");
+  const placeholders = columns.map((key) => `${key} = ?`);
+  const params = columns.map((key) => newAddress[key]);
+  params.push(addressId);
+
+  const sql = `UPDATE addresses SET ${placeholders} WHERE id = ?`;
+  const changes = await changesCount(sql, params);
+  if (changes === 0) return null;
+
+  const updatedAddressSql = "SELECT * FROM addresses WHERE id = ?";
+  const updatedAddress = await dbGet(updatedAddressSql, addressId);
+  return updatedAddress;
+};
+
+// Delete address by address ID
+exports.deleteAddressById = async (addressId) => {
+  const query = "DELETE FROM addresses WHERE id = ?";
+  const result = await changesCount(query, [addressId]);
+  return result > 0;
 };

@@ -1,9 +1,9 @@
-const parseIdParam = (req, res, next) => {
-  const id = Number(req.params.id);
+const parseIdParam = (paramName) => (req, res, next) => {
+  const id = Number(req.params[paramName]);
   if (isNaN(id)) {
     return res.status(400).json({ message: "Invalid ID parameter" });
   }
-  req.params.id = id;
+  req.params[paramName] = id;
   next();
 };
 

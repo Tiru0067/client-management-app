@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const errorHandler = require("./middleware/errorHandler");
 const customersRoutes = require("./routes/customersRoutes");
+const addressesRoutes = require("./routes/addressesRoutes");
 
 // Create an Express application
 const app = express();
@@ -12,6 +13,7 @@ app.use(cors());
 
 // Routes
 app.use("/api/customers", customersRoutes);
+app.use("/api/addresses", addressesRoutes);
 
 app.use(errorHandler);
 

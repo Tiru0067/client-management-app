@@ -54,7 +54,7 @@ exports.postCustomer = async (req, res, next) => {
 // Get customer by ID
 exports.getCustomerById = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const customer = await customersService.getCustomerById(id);
     if (!customer) {
       return sendResponse(res, 404, "Customer not found");
@@ -68,7 +68,7 @@ exports.getCustomerById = async (req, res, next) => {
 // Update customer by ID
 exports.updateCustomerById = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const updatedFields = req.body || {};
 
     // Validate input data - ensure at least one field to update
@@ -100,7 +100,7 @@ exports.updateCustomerById = async (req, res, next) => {
 // Delete customer by ID
 exports.deleteCustomerById = async (req, res, next) => {
   try {
-    const id = Number(req.params.id);
+    const id = req.params.id;
     const result = await customersService.deleteCustomerById(id);
     if (!result) {
       return sendResponse(res, 404, "Customer not found");

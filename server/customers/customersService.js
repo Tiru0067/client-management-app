@@ -180,16 +180,14 @@ exports.updateCustomerById = async (id, updateFields) => {
 
     // Filter out id
     const newUpdateFields = { ...existingCustomer, ...updateFields };
-    const keysToUpdate = Object.keys(newUpdateFields).filter(
-      (key) => key !== "id"
-    );
-    const setClause = keysToUpdate.map((key) => `${key} = ?`).join(", ");
-    const params = keysToUpdate.map((key) => newUpdateFields[key]);
+    const columns = Object.keys(newUpdateFields).filter((key) => key !== "id");
+    const placeholders = columns.map((key) => `${key} = ?`).join(", ");
+    const params = columns.map((key) => newUpdateFields[key]);
     params.push(id);
 
     const sql = `
       UPDATE customers
-      SET ${setClause}
+      SET ${placeholders}
       WHERE id = ?
     `;
 
