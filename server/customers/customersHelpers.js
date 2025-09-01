@@ -9,6 +9,7 @@ const allowedSortFields = ["id", "first_name", "last_name", "phone_number"];
 // Validate and sanitize sort parameters
 exports.validateSort = (sortBy, sortOrder) => {
   if (!allowedSortFields.includes(sortBy)) sortBy = "id";
+
   // Default to ascending order if sortOrder is not provided or invalid
   sortOrder = typeof sortOrder === "string" ? sortOrder.toUpperCase() : "ASC";
   if (!["ASC", "DESC"].includes(sortOrder)) sortOrder = "ASC";
@@ -28,13 +29,17 @@ exports.buildSearchFilter = (search) => {
 // ##################################################################################
 // Pagination helper
 exports.getPagination = (totalItems, currentPage = 1, limit = 10) => {
-  const totalPages = Math.ceil(totalItems / limit);
-  currentPage = parseInt(currentPage);
+  const MAX_LIMIT = 50;
   limit = parseInt(limit);
+  currentPage = parseInt(currentPage);
+
+  if (limit < 1) limit = 10;
+  if (limit > MAX_LIMIT) limit = MAX_LIMIT; // Enforce Max limit
+
   // Ensure currentPage and limit are within valid ranges
+  const totalPages = Math.ceil(totalItems / limit);
   if (currentPage > totalPages) currentPage = totalPages;
   if (currentPage < 1) currentPage = 1;
-  if (limit < 1) limit = 10;
 
   const offset = (currentPage - 1) * limit; // Calculate offset for SQL query
 
