@@ -19,7 +19,9 @@ exports.getCustomers = async (search, sortBy, sortOrder, page, limit) => {
 
     const countsql = `SELECT COUNT(*) as count FROM customers ${filters.whereClause}`;
     const sql = `
-        SELECT * FROM customers ${filters.whereClause}
+        SELECT *
+        FROM customers
+        ${filters.whereClause}
         ORDER BY ${sorting.sortBy} ${sorting.sortOrder}
         LIMIT ? OFFSET ?
     `;
