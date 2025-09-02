@@ -62,7 +62,7 @@ const CustomerDetailPage = () => {
           <CustomerPersonalDetails customer={customer} />
 
           {/* Addresses */}
-          <AddressList addresses={addresses} />
+          <AddressList addresses={addresses} customerId={customerId} />
         </div>
       )}
     </>

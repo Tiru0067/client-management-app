@@ -1,33 +1,36 @@
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
-import CustomerForm from "../components/CustomerForm";
+import AddressForm from "../components/AddressForm";
 import api from "../api";
 
-function CustomerFormPage() {
-  const { id } = useParams();
+function AddressFormPage() {
+  const { id, addressId } = useParams();
 
   const [formData, setFormData] = useState({
-    first_name: "",
-    last_name: "",
-    email: "",
-    phone_number: "",
+    address_details: "",
+    city: "",
+    state: "",
+    pin_code: "",
   });
   const [loading, setLoading] = useState(false);
 
   // Fetch customer data if editing
   useEffect(() => {
-    const fetchExistingCustomer = async () => {
+    const fetchExistingCustomerAddress = async () => {
       try {
         setLoading(true);
-        const response = await api.get(`/customers/${id}`);
-        const customer = response.data.data.customer;
+        const response = await api.get(`/customers/${id}/addresses`);
+        const addresses = response.data.data.addresses;
+        const address = addresses.filter(
+          (obj) => obj.id === Number(addressId)
+        )[0];
 
         setFormData({
-          first_name: customer.first_name || "",
-          last_name: customer.last_name || "",
-          email: customer.email || "",
-          phone_number: customer.phone_number || "",
+          address_details: address.address_details || "",
+          city: address.city || "",
+          state: address.state || "",
+          pin_code: address.pin_code || "",
         });
       } catch (error) {
         console.log(error);
@@ -36,8 +39,8 @@ function CustomerFormPage() {
         setLoading(false);
       }
     };
-    if (id) fetchExistingCustomer();
-  }, [id]);
+    if (addressId) fetchExistingCustomerAddress();
+  }, [id, addressId]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -46,12 +49,13 @@ function CustomerFormPage() {
       <div className="relative border border-gray-200 rounded-2xl max-w-3xl mt-12 shadow-sm">
         <div className="w-full px-6 py-3 border-b border-gray-200">
           <h2 className="text-lg font-semibold">
-            {id ? "Edit" : "Add"} Customer
+            {addressId ? "Edit" : "Add"} Address
           </h2>
         </div>
 
-        <CustomerForm
+        <AddressForm
           id={id}
+          addressId={addressId}
           formData={formData}
           setFormData={setFormData}
           setLoading={setLoading}
@@ -61,4 +65,4 @@ function CustomerFormPage() {
   );
 }
 
-export default CustomerFormPage;
+export default AddressFormPage;
