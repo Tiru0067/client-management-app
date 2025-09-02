@@ -101,10 +101,20 @@ const CustomerList = (props) => {
           </tr>
         </thead>
         <tbody>
-          {!loading &&
+          {!loading && customers.length > 0 ? (
             customers.map((customer) => (
               <CustomerTableRow key={customer.id} customer={customer} />
-            ))}
+            ))
+          ) : !loading ? (
+            <tr>
+              <td
+                colSpan={5}
+                className="text-center py-4 text-gray-500 border-0"
+              >
+                No customers found.
+              </td>
+            </tr>
+          ) : null}
         </tbody>
       </table>
       {loading && <LoadingSpinner loading={loading} />}

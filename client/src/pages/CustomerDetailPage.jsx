@@ -24,9 +24,7 @@ const CustomerDetailPage = () => {
     const fetchCustomerDetails = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://192.168.1.8:3000/api/customers/${customerId}`
-        );
+        const response = await api.get(`/customers/${customerId}`);
         const data = response.data.data.customer;
         setCustomer(data);
       } catch (err) {
