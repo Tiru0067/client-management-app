@@ -1,42 +1,58 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Playfair:ital,opsz,wght@0,5..1200,300..900;1,5..1200,300..900&display=swap");
 @import "tailwindcss";
 
 @theme {
-  --color-background: #18181b;
+  --font-playfair: "Playfair", serif;
+  --font-inter: "Inter", sans-serif;
 }
 
 /* Base styles for common elements */
 @layer base {
+  html {
+    @apply font-sans;
+  }
+
   body {
-    @apply bg-background;
+    @apply bg-white font-inter;
   }
 
   input {
     @apply focus:outline-none;
   }
+
+  input[type="search"]::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    display: none;
+  }
+
+  input[type="search"]::-ms-clear {
+    display: none;
+  }
 }
 
 /* ReUsable components */
 @layer components {
+  .page {
+    @apply px-[10%] max-md:px-5 py-5;
+  }
+
   .card {
     @apply rounded-md shadow-lg p-6 transition;
   }
 
-  .glass {
-    @apply bg-white/15 backdrop-blur-md border-white/25 border-[1.5px];
-  }
-
   /* Button */
   .btn {
-    @apply font-bold px-4 py-2.5 rounded-lg transition-colors duration-500;
+    @apply text-sm font-medium px-4 py-1.5 rounded-md transition-colors duration-500 leading-0;
   }
 
   /* Button Variants */
   .btn-solid {
-    @apply bg-blue-500 text-white hover:bg-blue-700;
+    @apply bg-black text-white border-2 border-black hover:border-black/0 hover:bg-black/80 focus:ring-2 focus:ring-black whitespace-nowrap;
   }
 
   .btn-outline {
-    @apply bg-transparent border border-blue-500 hover:bg-blue-500 hover:text-white text-blue-500;
+    @apply bg-transparent text-black border-2 border-gray-300 hover:bg-black hover:border-black hover:text-white;
   }
 }
 

@@ -5,18 +5,10 @@ const customersService = require("../customers/customersService");
 exports.getAllCustomers = async (req, res, next) => {
   try {
     // Extract query parameters
-    let { search, sort_by, sort_order, page, limit, only_one_address } =
-      req.query;
+    let queryOptions = req.query;
 
     const { customers, currentPage, totalPages, totalItems, pageLimit } =
-      await customersService.getCustomers(
-        search,
-        sort_by,
-        sort_order,
-        page,
-        limit,
-        only_one_address
-      );
+      await customersService.getCustomers(queryOptions);
 
     if (!customers) return sendResponse(res, 404, "No customers found");
 
@@ -33,20 +25,31 @@ exports.getAllCustomers = async (req, res, next) => {
   }
 };
 
-// Post a new customer
 exports.postCustomer = async (req, res, next) => {
   try {
-    // Implementation for adding a new customer
-    const { first_name, last_name, phone_number } = req.body || {};
-    // Validate input data
-    if (!first_name || !last_name || !phone_number) {
-      return sendResponse(res, 400, "Missing required fields");
+    const data = req.body || {};
+
+    // Required by schema
+    const requiredFields = ["first_name", "last_name", "phone_number"];
+    const missing = requiredFields.filter((f) => !data[f]);
+    if (missing.length > 0) {
+      return sendResponse(
+        res,
+        400,
+        `Missing required fields: ${missing.join(", ")}`
+      );
     }
-    const newCustomer = await customersService.addCustomer(
-      first_name,
-      last_name,
-      phone_number
-    );
+
+    // Allowed input fields (only user-provided columns)
+    // NOTE: do NOT include id, created_at, updated_at, only_one_address
+    const allowedFields = ["first_name", "last_name", "phone_number", "email"];
+    const customerData = {};
+    for (const key of allowedFields) {
+      if (data[key] !== undefined) customerData[key] = data[key];
+    }
+
+    const newCustomer = await customersService.addCustomer(customerData);
+
     return sendResponse(res, 201, "Customer added successfully", newCustomer);
   } catch (error) {
     next(error);
@@ -71,11 +74,21 @@ exports.getCustomerById = async (req, res, next) => {
 exports.updateCustomerById = async (req, res, next) => {
   try {
     const id = req.params.id;
-    const updatedFields = req.body || {};
+    const data = req.body || {};
 
-    // Validate input data - ensure at least one field to update
-    if (!updatedFields || Object.keys(updatedFields).length === 0) {
-      return sendResponse(res, 400, "Missing required fields");
+    // Allowed fields to update
+    const allowedFields = ["first_name", "last_name", "phone_number", "email"];
+    const updatedFields = {};
+
+    for (const field of allowedFields) {
+      if (data[field] !== undefined) {
+        updatedFields[field] = data[field];
+      }
+    }
+
+    // Validate: must have at least one field to update
+    if (Object.keys(updatedFields).length === 0) {
+      return sendResponse(res, 400, "No valid fields to update");
     }
 
     const updatedCustomer = await customersService.updateCustomerById(

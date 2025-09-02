@@ -11,25 +11,18 @@ const dbGet = util.promisify(db.get).bind(db);
 const dbAll = util.promisify(db.all).bind(db);
 
 // Fetch customers with optional search, sorting, and pagination
-exports.getCustomers = async (
-  search,
-  sortBy,
-  sortOrder,
-  page,
-  limit,
-  only_one_address
-) => {
+exports.getCustomers = async (queryOptions) => {
   try {
-    const filters = buildSearchFilter(search);
-    const sorting = validateSort(sortBy, sortOrder);
+    const filters = buildSearchFilter(queryOptions.search);
+    const sorting = validateSort(queryOptions.sort_by, queryOptions.sort_order);
 
     let whereClause = filters.whereClause;
     const trueValues = [true, "true", 1, "1"];
     const falseValues = [false, "false", 0, "0"];
 
-    const value = trueValues.includes(only_one_address)
+    const value = trueValues.includes(queryOptions.only_one_address)
       ? 1
-      : falseValues.includes(only_one_address)
+      : falseValues.includes(queryOptions.only_one_address)
       ? 0
       : null;
 
@@ -56,7 +49,11 @@ exports.getCustomers = async (
       LIMIT ? OFFSET ?
     `;
 
-    const pagination = getPagination(totalItems, page, limit);
+    const pagination = getPagination(
+      totalItems,
+      queryOptions.page,
+      queryOptions.limit
+    );
     const idParams = [...filters.params, pagination.limit, pagination.offset];
 
     // Get customer IDs for the current page
@@ -76,15 +73,19 @@ exports.getCustomers = async (
     // 3. Get customer details with addresses
     const sql = `
         SELECT 
-          customers.id,
-          customers.first_name,
-          customers.last_name,
-          customers.phone_number,
-          customers.only_one_address,
-          addresses.address_details,
-          addresses.city,
-          addresses.state,
-          addresses.pin_code
+          customers.id AS c_id,
+          customers.first_name AS c_first_name,
+          customers.last_name AS c_last_name,
+          customers.email AS c_email,
+          customers.created_at AS c_created_at,
+          customers.updated_at AS c_updated_at,
+          customers.phone_number AS c_phone_number,
+          customers.only_one_address AS c_only_one_address,
+          addresses.id AS a_id,
+          addresses.address_details AS a_address_details,
+          addresses.city AS a_city,
+          addresses.state AS a_state,
+          addresses.pin_code AS a_pin_code
         FROM customers
         LEFT JOIN addresses ON customers.id = addresses.customer_id
         WHERE customers.id IN (${customerIds.map(() => "?").join(",")})
@@ -93,30 +94,30 @@ exports.getCustomers = async (
 
     const rows = await dbAll(sql, customerIds);
 
-    // Group addresses by customer
     const customersMap = new Map();
+
     rows.forEach((row) => {
-      if (!customersMap.has(row.id)) {
-        customersMap.set(row.id, {
-          id: row.id,
-          first_name: row.first_name,
-          last_name: row.last_name,
-          phone_number: row.phone_number,
-          only_one_address: row.only_one_address,
-          addresses: [],
-        });
+      // Separate customer and address fields
+      const customerData = {};
+      const addressData = {};
+
+      for (const key in row) {
+        if (key.startsWith("c_")) {
+          customerData[key.replace("c_", "")] = row[key];
+        } else if (key.startsWith("a_")) {
+          addressData[key.replace("a_", "")] = row[key];
+        }
       }
-      if (row.address_details) {
-        customersMap.get(row.id).addresses.push({
-          address_details: row.address_details,
-          city: row.city,
-          state: row.state,
-          pin_code: row.pin_code,
-        });
+
+      if (!customersMap.has(customerData.id)) {
+        customersMap.set(customerData.id, { ...customerData, addresses: [] });
+      }
+
+      if (addressData.id) {
+        customersMap.get(customerData.id).addresses.push(addressData);
       }
     });
 
-    // Convert map values to an array
     const customers = Array.from(customersMap.values());
 
     return {
@@ -132,17 +133,24 @@ exports.getCustomers = async (
 };
 
 // Add a new customer service
-exports.addCustomer = async (first_name, last_name, phone_number) => {
+exports.addCustomer = async (customerData) => {
   try {
-    const sql = `
-    INSERT INTO customers (first_name, last_name, phone_number)
-    VALUES (?, ?, ?)
-    `;
-    const result = await lastAffectedId(sql, [
-      first_name,
-      last_name,
-      phone_number,
-    ]);
+    // Defensive: do not allow these fields from input
+    delete customerData.id;
+    delete customerData.created_at;
+    delete customerData.updated_at;
+    delete customerData.only_one_address; // computed field
+
+    const keys = Object.keys(customerData);
+    if (keys.length === 0) {
+      throw new Error("No valid fields provided to insert");
+    }
+    const placeholders = keys.map(() => "?").join(", ");
+    const values = keys.map((k) => customerData[k]);
+
+    const sql = `INSERT INTO customers 
+    (${keys.join(", ")}) VALUES (${placeholders})`;
+    const result = await lastAffectedId(sql, values);
 
     // Fetch and return the newly added customer
     const currentItemSql = `SELECT * FROM customers WHERE id = ?`;
@@ -158,43 +166,51 @@ exports.getCustomerById = async (id) => {
   try {
     const sql = `
       SELECT 
-        customers.id,
-        customers.first_name,
-        customers.last_name,
-        customers.phone_number,
-        customers.only_one_address,
-        addresses.address_details,
-        addresses.city,
-        addresses.state,
-        addresses.pin_code
+        customers.id AS c_id,
+        customers.first_name AS c_first_name,
+        customers.last_name AS c_last_name,
+        customers.email AS c_email,
+        customers.created_at AS c_created_at,
+        customers.updated_at AS c_updated_at,
+        customers.phone_number AS c_phone_number,
+        customers.only_one_address AS c_only_one_address,
+        addresses.id AS a_id,
+        addresses.address_details AS a_address_details,
+        addresses.city AS a_city,
+        addresses.state AS a_state,
+        addresses.pin_code AS a_pin_code
       FROM customers
       LEFT JOIN addresses ON customers.id = addresses.customer_id
       WHERE customers.id = ?
     `;
-    const rows = await dbAll(sql, [id]);
-    if (rows.length === 0) return null; // Customer not found
 
-    const customer = {
-      id: rows[0].id,
-      first_name: rows[0].first_name,
-      last_name: rows[0].last_name,
-      phone_number: rows[0].phone_number,
-      only_one_address: rows[0].only_one_address,
-      addresses: [],
-    };
+    const rows = await dbAll(sql, [id]);
+    if (rows.length === 0) return null;
+
+    // Separate customer and address fields dynamically
+    const customerData = {};
+    const addresses = [];
 
     rows.forEach((row) => {
-      if (row.address_details) {
-        customer.addresses.push({
-          address_details: row.address_details,
-          city: row.city,
-          state: row.state,
-          pin_code: row.pin_code,
-        });
+      const addressData = {};
+
+      for (const key in row) {
+        if (key.startsWith("c_")) {
+          customerData[key.replace("c_", "")] = row[key];
+        } else if (key.startsWith("a_")) {
+          addressData[key.replace("a_", "")] = row[key];
+        }
+      }
+
+      if (addressData.id) {
+        addresses.push(addressData);
       }
     });
 
-    return customer;
+    return {
+      ...customerData,
+      addresses,
+    };
   } catch (err) {
     throw err;
   }
@@ -203,34 +219,24 @@ exports.getCustomerById = async (id) => {
 // Update customer by ID service
 exports.updateCustomerById = async (id, updateFields) => {
   try {
-    const existingCustomer = await dbGet(
-      `SELECT * FROM customers WHERE id = ?`,
-      [id]
-    );
-    if (!existingCustomer) return null; // Customer not found
+    if (!updateFields || Object.keys(updateFields).length === 0) return null;
 
-    // Filter out id
-    const newUpdateFields = { ...existingCustomer, ...updateFields };
-    const columns = Object.keys(newUpdateFields).filter((key) => key !== "id");
+    const columns = Object.keys(updateFields);
     const placeholders = columns.map((key) => `${key} = ?`).join(", ");
-    const params = columns.map((key) => newUpdateFields[key]);
+    const params = columns.map((key) => updateFields[key]);
     params.push(id);
 
     const sql = `
       UPDATE customers
-      SET ${placeholders}
+      SET ${placeholders}, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
     `;
 
-    // Execute the update query and get the number of affected rows
     const changes = await changesCount(sql, params);
+    if (changes === 0) return null;
 
-    if (changes === 0) return null; // No rows updated, possibly invalid ID
-
-    // Fetch and return the updated customer
     const updatedCustomerSql = `SELECT * FROM customers WHERE id = ?`;
-    const updatedCustomer = await dbGet(updatedCustomerSql, [id]);
-    return updatedCustomer;
+    return await dbGet(updatedCustomerSql, [id]);
   } catch (err) {
     throw err;
   }
