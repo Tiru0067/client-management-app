@@ -4,6 +4,13 @@ import CustomerList from "../components/CustomerList";
 
 const CustomerListPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [customers, setCustomers] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    totalItems: 0,
+    totalPages: 0,
+  });
 
   return (
     <div className="page">
@@ -21,7 +28,7 @@ const CustomerListPage = () => {
       <div className="relative mt-5 flex items-center justify-between">
         <h4 className="font-sans text-md text-black font-semibold">
           All <span className="max-sm:hidden">customers</span>{" "}
-          <span className="text-gray-500 ml-2">54</span>
+          <span className="text-gray-500 ml-2">{pagination.totalItems}</span>
         </h4>
 
         <div className="flex items-center gap-4">
@@ -54,7 +61,13 @@ const CustomerListPage = () => {
       </div>
 
       {/* Customers list */}
-      <CustomerList />
+      <CustomerList
+        customers={customers}
+        setCustomers={setCustomers}
+        pagination={pagination}
+        setPagination={setPagination}
+        searchQuery={searchQuery}
+      />
     </div>
   );
 };

@@ -29,6 +29,14 @@
   input[type="search"]::-ms-clear {
     display: none;
   }
+
+  th {
+    @apply font-normal text-xs text-left text-neutral-800 px-2 py-3;
+  }
+
+  td {
+    @apply text-left border-b border-b-gray-200 text-sm max-md:text-xs text-gray-800 px-2 py-4;
+  }
 }
 
 /* ReUsable components */
