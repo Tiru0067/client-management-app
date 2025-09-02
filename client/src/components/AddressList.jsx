@@ -2,12 +2,12 @@ import { Plus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AddressItem from "./AddressItem";
 
-const AddressList = ({ addresses, customerId }) => {
+const AddressList = ({ addresses, customerId, setCustomer }) => {
   const navigate = useNavigate();
 
   return (
     <div>
-      <div className="mt-12 px-2 flex justify-between items-center">
+      <div className="mt-12 px-2 max-w-3xl flex justify-between items-center">
         <h2 className="text-lg font-semibold">Addresses</h2>
         <button
           className="flex gap-1 items-center btn btn-solid"
@@ -25,6 +25,7 @@ const AddressList = ({ addresses, customerId }) => {
             address={address}
             index={index}
             customerId={customerId}
+            setCustomer={setCustomer}
           />
         ))
       ) : (

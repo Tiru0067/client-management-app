@@ -15,7 +15,7 @@ const TableRow = ({ customer }) => {
     only_one_address: onlyOneAddress,
   } = customer;
 
-  const hasOnlyOneAddress = onlyOneAddress === 0 ? "True" : "False";
+  const hasOnlyOneAddress = onlyOneAddress ? "True" : "False";
 
   return (
     <tr>

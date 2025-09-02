@@ -58,8 +58,15 @@ exports.updateAddressById = async (addressId, addressUpdates) => {
 
 // Delete address by address ID
 exports.deleteAddressById = async (addressId) => {
+  const address = await dbGet("SELECT * FROM addresses WHERE id = ?", [
+    addressId,
+  ]);
+  if (!address) {
+    throw new Error(`Address with id ${addressId} not found`);
+  }
+  const customerId = address["customer_id"];
   const query = "DELETE FROM addresses WHERE id = ?";
   const result = await changesCount(query, [addressId]);
-  await updateOnlyOneAddressFlag(null, addressId);
+  await updateOnlyOneAddressFlag(customerId);
   return result > 0;
 };

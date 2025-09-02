@@ -29,7 +29,7 @@ const AddressForm = (props) => {
     e.preventDefault();
     try {
       setLoading(true);
-      if (id) {
+      if (addressId) {
         await api.put(`/addresses/${addressId}`, formData); // Edit existing Address
       } else {
         await api.post(`/customers/${id}/addresses`, formData); // Add new Address

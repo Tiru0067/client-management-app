@@ -26,7 +26,7 @@ db.serialize(() => {
         email TEXT UNIQUE,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        phone_number TEXT NOT NULL UNIQUE
+        phone_number TEXT NOT NULL UNIQUE,
         only_one_address BOOLEAN DEFAULT 0
     )`,
     (err) => {

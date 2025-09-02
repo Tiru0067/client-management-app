@@ -34,7 +34,7 @@ const CustomerPersonalDetails = ({ customer }) => {
       <div className="w-full px-6 py-3 border-b border-gray-200 flex justify-between items-center">
         <h2 className="text-lg font-semibold">Personal details</h2>
         <button
-          className="p-3 bg-gray-100 rounded-full"
+          className="p-3 bg-gray-100 hover:bg-gray-200 rounded-full"
           onClick={() => navigate(`/customers/${customer.id}/edit`)}
         >
           <Pencil size={14} />

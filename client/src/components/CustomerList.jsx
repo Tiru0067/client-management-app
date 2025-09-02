@@ -1,12 +1,19 @@
-import axios from "axios";
 import { useEffect, useState } from "react";
 import CustomerTableRow from "./CustomerTableRow";
 import LoadingSpinner from "../components/LoadingSpinner";
+import api from "../api";
 
 const CustomerList = (props) => {
   const [loading, setLoading] = useState(false);
-  const { customers, setCustomers, pagination, setPagination, searchQuery } =
-    props;
+  const {
+    customers,
+    setCustomers,
+    pagination,
+    setPagination,
+    filters,
+    setFilters,
+    searchQuery,
+  } = props;
 
   useEffect(() => {
     let isMounted = true;
@@ -14,13 +21,24 @@ const CustomerList = (props) => {
     const fetchCustomersData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(
-          `http://192.168.1.8:3000/api/customers?page=${pagination.page}&limit=${pagination.limit}&search=${searchQuery}`
-        );
-        const { customers, page, limit, totalPages, totalItems } =
-          response.data.data;
+        const response = await api.get(`/customers`, {
+          params: {
+            search: searchQuery,
+            page: pagination.page,
+            limit: filters.limit,
+            sort_by: filters.sortBy,
+            sort_order: filters.sortOrder,
+            only_one_address:
+              filters.onlyOneAddress === "all"
+                ? undefined
+                : filters.onlyOneAddress === "yes"
+                ? 1
+                : 0,
+          },
+        });
+        const { customers, page, totalPages, totalItems } = response.data.data;
         setCustomers(customers);
-        setPagination({ page, limit, totalItems, totalPages });
+        setPagination({ page, totalItems, totalPages });
       } catch (err) {
         console.log(err);
       } finally {
@@ -34,12 +52,21 @@ const CustomerList = (props) => {
       isMounted = false;
     };
   }, [
+    filters.sortBy,
+    filters.onlyOneAddress,
+    filters.sortOrder,
     pagination.page,
-    pagination.limit,
+    filters.limit,
     searchQuery,
     setCustomers,
     setPagination,
+    setFilters,
   ]);
+
+  // Save filters to localStorage
+  useEffect(() => {
+    localStorage.setItem("customerFilters", JSON.stringify(filters));
+  }, [filters]);
 
   const ths = document.querySelectorAll("thead th");
   ths.forEach((th) =>

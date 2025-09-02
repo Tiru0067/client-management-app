@@ -1,16 +1,42 @@
 import { Search, ListFilter, Plus } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CustomerList from "../components/CustomerList";
+import FiltersControlUi from "../components/FiltersControlUi";
 
 const CustomerListPage = () => {
+  const initialFilters = {
+    limit: 20,
+    sortBy: "id",
+    sortOrder: "ASC",
+    onlyOneAddress: "all",
+  };
+
+  // Load saved filters from localStorage if available
+  const savedFilters =
+    JSON.parse(localStorage.getItem("customerFilters")) || initialFilters;
+
+  const [filters, setFilters] = useState(savedFilters);
+
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [customers, setCustomers] = useState([]);
+  const [showFilters, setShowFilters] = useState(false);
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 20,
     totalItems: 0,
     totalPages: 0,
   });
+
+  const goToPage = (p) => {
+    if (p < 1 || p > pagination.totalPages) return; // prevent invalid page
+    setPagination((prev) => ({ ...prev, page: p }));
+  };
+
+  const pages = [];
+  for (let i = 1; i <= pagination.totalPages; i++) {
+    pages.push(i);
+  }
 
   return (
     <div className="page">
@@ -44,16 +70,32 @@ const CustomerListPage = () => {
           </form>
 
           {/* Filter button */}
-          <button className="flex gap-1 items-center btn btn-outline group">
-            <ListFilter
-              size={18}
-              className="text-neutral-500 group-hover:text-white transition-colors duration-500"
-            />
-            <span>Filter</span>
-          </button>
+          <div className="relative">
+            <button
+              className="flex gap-1 items-center btn btn-outline group"
+              onClick={() => setShowFilters(!showFilters)}
+            >
+              <ListFilter
+                size={18}
+                className="text-neutral-500 group-hover:text-white transition-colors duration-500"
+              />
+              <span>Filter</span>
+            </button>
+            {/* Filters */}
+            {showFilters && (
+              <FiltersControlUi
+                filters={filters}
+                setFilters={setFilters}
+                initialFilters={initialFilters}
+              />
+            )}
+          </div>
 
           {/* Add Customer Button */}
-          <button className="flex gap-1 items-center btn btn-solid">
+          <button
+            className="flex gap-1 items-center btn btn-solid"
+            onClick={() => navigate(`/customers/new`)}
+          >
             <Plus size={18} />
             <span>Add</span>
           </button>
@@ -65,9 +107,26 @@ const CustomerListPage = () => {
         customers={customers}
         setCustomers={setCustomers}
         pagination={pagination}
+        filters={filters}
+        setFilters={setFilters}
         setPagination={setPagination}
         searchQuery={searchQuery}
       />
+
+      {/* Pagination */}
+      <div className="my-10 w-full flex-center">
+        {pages.map((p) => (
+          <button
+            key={p}
+            onClick={() => goToPage(p)}
+            className={`text-gray-800 text-sm px-3.5 py-2 rounded-md ${
+              pagination.page === p ? "bg-gray-100" : ""
+            }`}
+          >
+            {p}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };
