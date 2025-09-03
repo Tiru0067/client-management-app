@@ -14,13 +14,13 @@ const CustomerPersonalDetails = ({ customer }) => {
     {
       label: "Created at",
       value: customer.created_at
-        ? format(new Date(customer.created_at), "MMM dd, yyyy, hh:mm a")
+        ? format(new Date(customer.created_at + "Z"), "MMM dd, yyyy, hh:mm a")
         : "-",
     },
     {
       label: "Updated at",
       value: customer.updated_at
-        ? format(new Date(customer.updated_at), "MMM dd, yyyy, hh:mm a")
+        ? format(new Date(customer.updated_at + "Z"), "MMM dd, yyyy, hh:mm a")
         : "-",
     },
     {

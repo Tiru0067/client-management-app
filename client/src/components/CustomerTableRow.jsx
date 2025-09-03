@@ -34,8 +34,8 @@ const TableRow = ({ customer }) => {
         </button>
       </td>
       <td className="max-md:hidden">{phone}</td>
-      <td>{format(updatedAt, "MMM d, yyyy")}</td>
-      <td>{format(createdAt, "MMM d, yyyy")}</td>
+      <td>{format(new Date(updatedAt), "MMM d, yyyy")}</td>
+      <td>{format(new Date(createdAt), "MMM d, yyyy")}</td>
       <td className="max-md:hidden">{hasOnlyOneAddress}</td>
     </tr>
   );
