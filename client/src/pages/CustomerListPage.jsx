@@ -87,6 +87,7 @@ const CustomerListPage = () => {
                 filters={filters}
                 setFilters={setFilters}
                 initialFilters={initialFilters}
+                onClose={() => setShowFilters(false)}
               />
             )}
           </div>

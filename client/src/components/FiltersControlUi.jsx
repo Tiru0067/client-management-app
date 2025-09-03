@@ -1,4 +1,19 @@
-const FiltersControlUi = ({ filters, setFilters, initialFilters }) => {
+import { useEffect, useRef } from "react";
+
+const FiltersControlUi = ({ filters, setFilters, initialFilters, onClose }) => {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (ref.current && !ref.current.contains(e.target)) {
+        onClose?.();
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
   const filterFileds = [
     {
       label: "Sort by",
@@ -26,7 +41,10 @@ const FiltersControlUi = ({ filters, setFilters, initialFilters }) => {
     },
   ];
   return (
-    <div className="absolute top-full right-0 mt-5 z-10 bg-white shadow-md p-5 rounded-md border border-gray-200">
+    <div
+      ref={ref}
+      className="absolute top-full right-0 mt-5 z-10 bg-white shadow-md p-5 rounded-md border border-gray-200"
+    >
       <h3 className="text-lg font-medium text-black mb-2">Filters</h3>
       <div className="flex flex-col">
         {filterFileds.map((filter) => (
@@ -55,7 +73,7 @@ const FiltersControlUi = ({ filters, setFilters, initialFilters }) => {
         ))}
       </div>
       <button
-        className="btn btn-solid py-4 hover:bg-black/80"
+        className="btn btn-solid w-full py-2 hover:bg-black/80"
         onClick={() => setFilters(initialFilters)}
       >
         Clear
