@@ -1,6 +1,5 @@
 import { useParams } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { useEffect, useState } from "react";
 import { CircleUser, Trash2 } from "lucide-react";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -8,9 +7,11 @@ import CustomerPersonalDetails from "../components/CustomerPersonalDetails";
 import AddressList from "../components/AddressList";
 import ConfirmationModal from "../components/ConfirmationModal";
 import api from "../api";
+import ErrorMessage from "../components/ErrorMessage";
 
 const CustomerDetailPage = () => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState({ hasError: false, message: "" });
   const [customer, setCustomer] = useState({});
   const [isModalOpen, setModalOpen] = useState(false);
   const { id } = useParams();
@@ -26,9 +27,18 @@ const CustomerDetailPage = () => {
         setLoading(true);
         const response = await api.get(`/customers/${customerId}`);
         const data = response.data.data.customer;
+        if (!data) {
+          setError({ hasError: true, message: "Customer not found." });
+        } else {
+          setError({ hasError: false, message: "" });
+        }
         setCustomer(data);
       } catch (err) {
         console.log(err);
+        setError({
+          hasError: true,
+          message: "Failed to load customer details.",
+        });
       } finally {
         setTimeout(() => {
           if (isMounted) setLoading(false);
@@ -50,6 +60,10 @@ const CustomerDetailPage = () => {
       console.log(err);
     }
   };
+
+  if (error.hasError) {
+    return <ErrorMessage message={error.message} />;
+  }
 
   return (
     <>

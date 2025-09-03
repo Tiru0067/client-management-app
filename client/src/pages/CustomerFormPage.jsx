@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import CustomerForm from "../components/CustomerForm";
 import api from "../api";
+import ErrorMessage from "../components/ErrorMessage";
 
 function CustomerFormPage() {
   const { id } = useParams();
@@ -14,6 +15,7 @@ function CustomerFormPage() {
     phone_number: "",
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState({ hasError: false, message: "" });
 
   // Fetch customer data if editing
   useEffect(() => {
@@ -22,7 +24,11 @@ function CustomerFormPage() {
         setLoading(true);
         const response = await api.get(`/customers/${id}`);
         const customer = response.data.data.customer;
-
+        if (!customer) {
+          setError({ hasError: true, message: "Customer not found." });
+        } else {
+          setError({ hasError: false, message: "" });
+        }
         setFormData({
           first_name: customer.first_name || "",
           last_name: customer.last_name || "",
@@ -31,6 +37,10 @@ function CustomerFormPage() {
         });
       } catch (error) {
         console.log(error);
+        setError({
+          hasError: true,
+          message: "Failed to load customer details.",
+        });
         setLoading(false);
       } finally {
         setLoading(false);
@@ -40,6 +50,7 @@ function CustomerFormPage() {
   }, [id]);
 
   if (loading) return <LoadingSpinner />;
+  if (error.hasError) return <ErrorMessage message={error.message} />;
 
   return (
     <div className="page">

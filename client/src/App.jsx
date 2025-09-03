@@ -9,6 +9,7 @@ import CustomerListPage from "./pages/CustomerListPage";
 import CustomerDetailPage from "./pages/CustomerDetailPage";
 import CustomerFormPage from "./pages/CustomerFormPage";
 import AddressFormPage from "./pages/AddressFormPage";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
           path="/customers/:id/addresses/new"
           element={<AddressFormPage />}
         />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   );
